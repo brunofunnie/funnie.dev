@@ -1,0 +1,25 @@
+# macOS
+.DS_Store
+
+# Env
+.env
+
+# WordPress (served from named volumes, not version-controlled)
+wp-content/uploads/
+wp-content/plugins/
+wp-content/upgrade/
+wp-content/cache/
+
+# Tooling
+.idea/
+.vscode/
+
+# Playwright / MCP artefacts
+.playwright-mcp/
+
+# Local Docker overrides
+docker-compose.override.yml
+
+# Database dumps
+*.sql
+*.sql.gz

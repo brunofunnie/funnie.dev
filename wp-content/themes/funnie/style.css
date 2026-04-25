@@ -1,0 +1,12 @@
+/*
+Theme Name: Funnie
+Theme URI: https://funnie.dev
+Author: Funnietech
+Description: Personal site for Bruno Oliveira (Funnie). Day/night split single-page layout with full-viewport panel overlays.
+Version: 0.1.0
+Requires at least: 6.4
+Requires PHP: 8.1
+Text Domain: funnie
+*/
+
+/* Main stylesheet is loaded separately via inc/enqueue.php → assets/css/main.css */

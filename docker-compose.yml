@@ -1,0 +1,83 @@
+services:
+  db:
+    image: mariadb:11
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
+      MYSQL_PASSWORD: ${DB_PASS}
+    volumes:
+      - db_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  wordpress:
+    image: wordpress:6.9.4-php8.3-apache
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASS}
+      WORDPRESS_DEBUG: "1"
+    volumes:
+      - wp_core:/var/www/html
+      - wp_uploads:/var/www/html/wp-content/uploads
+      - wp_plugins:/var/www/html/wp-content/plugins
+      - ./wp-content/themes/funnie:/var/www/html/wp-content/themes/funnie
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./bin:/var/www/html/bin:ro
+
+  wpcli:
+    image: wordpress:cli-php8.3
+    depends_on:
+      - wordpress
+      - db
+    user: "33:33"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_NAME: ${DB_NAME}
+      WORDPRESS_DB_USER: ${DB_USER}
+      WORDPRESS_DB_PASSWORD: ${DB_PASS}
+    volumes:
+      - wp_core:/var/www/html
+      - wp_uploads:/var/www/html/wp-content/uploads
+      - wp_plugins:/var/www/html/wp-content/plugins
+      - ./wp-content/themes/funnie:/var/www/html/wp-content/themes/funnie
+      - ./wp-content/mu-plugins:/var/www/html/wp-content/mu-plugins
+      - ./bin:/var/www/html/bin:ro
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    restart: unless-stopped
+    depends_on:
+      - db
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: ${DB_USER}
+      PMA_PASSWORD: ${DB_PASS}
+      UPLOAD_LIMIT: 200M
+
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "8025:8025"
+      - "1025:1025"
+
+volumes:
+  wp_core:
+  wp_uploads:
+  wp_plugins:
+  db_data:

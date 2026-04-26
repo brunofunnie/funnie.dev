@@ -10,8 +10,7 @@ $discord_handle = funnie_settings('discord_handle', 'funnie');
 $discord_label  = funnie_settings('socials_discord_label', '@funnie · click to copy');
 $email          = funnie_settings('contact_email', 'brunodeoliveira@gmail.com');
 ?>
-<aside id="panel-socials" class="panel panel-night" data-side="night" role="dialog" aria-modal="true" aria-labelledby="panel-socials-title" hidden>
-    <button type="button" class="panel-close" aria-label="Close Socials panel">×</button>
+<section id="socials" class="panel panel-night" data-side="night" aria-labelledby="panel-socials-title">
     <h2 id="panel-socials-title" class="panel-title">Socials</h2>
     <div class="panel-body">
         <p class="mb-10 max-w-prose text-night-muted"><?php echo esc_html($intro); ?></p>
@@ -42,4 +41,4 @@ $email          = funnie_settings('contact_email', 'brunodeoliveira@gmail.com');
             <button type="button" data-copy-text="<?php echo esc_attr($email); ?>" class="copy-btn" data-copied="false">Copy</button>
         </div>
     </div>
-</aside>
+</section>

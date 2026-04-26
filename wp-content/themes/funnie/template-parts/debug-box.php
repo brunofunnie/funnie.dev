@@ -8,6 +8,8 @@
             <span class="weather-condition">…</span>
         </div>
     </div>
+    <?php if (is_front_page()): /* Hour slider drives day↔night swap on the
+        hero — hidden on other pages where the side is locked by post category. */ ?>
     <div class="debug-section">
         <div class="debug-row">
             <span class="debug-label">Hour</span>
@@ -15,6 +17,7 @@
         </div>
         <input type="range" id="time-slider" min="0" max="23.999" step="0.05" value="12" aria-label="Hour of the day" />
     </div>
+    <?php endif; ?>
     <div class="debug-section">
         <div class="debug-row">
             <span class="debug-label">Moon phase</span>

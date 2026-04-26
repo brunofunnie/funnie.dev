@@ -18,8 +18,7 @@ $items = [
     ['kind' => 'chair',    'name' => 'Ergonomic Chair',      'note' => 'Adjustable everywhere · lumbar.',     'svg' => '<path d="M6 4h12v8H6zM6 12v6M18 12v6M5 22h14"/>'],
 ];
 ?>
-<aside id="panel-hardware" class="panel panel-night" data-side="night" role="dialog" aria-modal="true" aria-labelledby="panel-hardware-title" hidden>
-    <button type="button" class="panel-close" aria-label="Close Hardware panel">×</button>
+<section id="hardware" class="panel panel-night" data-side="night" aria-labelledby="panel-hardware-title">
     <h2 id="panel-hardware-title" class="panel-title">Hardware</h2>
     <div class="panel-body">
         <p class="mb-8 max-w-prose text-night-muted"><?php echo esc_html($intro); ?></p>
@@ -44,4 +43,4 @@ $items = [
             <?php endforeach; ?>
         </div>
     </div>
-</aside>
+</section>

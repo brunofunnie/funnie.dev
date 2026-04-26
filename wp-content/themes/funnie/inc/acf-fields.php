@@ -8,15 +8,15 @@ $settings_location = [[
 
 $rows_help = 'One row per item. Columns separated by "|". Blank lines and lines starting with # are skipped.';
 
-/* Hero — wordmark, day/night labels and taglines. */
+/* Hero — logo, day/night labels and taglines. */
 acf_add_local_field_group([
     'key'      => 'group_funnie_hero',
     'title'    => 'Hero',
     'location' => $settings_location,
     'fields'   => [
-        ['key' => 'field_hero_wordmark_top',    'name' => 'hero_wordmark_top',    'label' => 'Wordmark — top line',    'type' => 'text', 'default_value' => 'funnie'],
-        ['key' => 'field_hero_wordmark_bottom', 'name' => 'hero_wordmark_bottom', 'label' => 'Wordmark — bottom line', 'type' => 'text', 'default_value' => 'dev'],
-        ['key' => 'field_hero_day_label',       'name' => 'hero_day_label',       'label' => 'Day big heading',        'type' => 'text', 'default_value' => 'DAY'],
+        ['key' => 'field_hero_logo_top',    'name' => 'hero_logo_top',    'label' => 'Logo — top line',    'type' => 'text', 'default_value' => 'funnie'],
+        ['key' => 'field_hero_logo_bottom', 'name' => 'hero_logo_bottom', 'label' => 'Logo — bottom line', 'type' => 'text', 'default_value' => 'dev'],
+        ['key' => 'field_hero_day_label',   'name' => 'hero_day_label',   'label' => 'Day big heading',    'type' => 'text', 'default_value' => 'DAY'],
         ['key' => 'field_hero_night_label',     'name' => 'hero_night_label',     'label' => 'Night big heading',      'type' => 'text', 'default_value' => 'NIGHT'],
         ['key' => 'field_hero_day_tagline',     'name' => 'hero_day_tagline',     'label' => 'Day footer tagline',     'type' => 'text', 'default_value' => '// professional'],
         ['key' => 'field_hero_night_tagline',   'name' => 'hero_night_tagline',   'label' => 'Night footer tagline',   'type' => 'text', 'default_value' => '// personal'],

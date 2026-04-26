@@ -1,8 +1,8 @@
 <?php
 if (!defined('ABSPATH')) exit;
 
-$wordmark_top    = funnie_settings('hero_wordmark_top',    'funnie');
-$wordmark_bottom = funnie_settings('hero_wordmark_bottom', 'dev');
+$logo_top    = funnie_settings('hero_logo_top',    'funnie');
+$logo_bottom = funnie_settings('hero_logo_bottom', 'dev');
 $day_label       = funnie_settings('hero_day_label',   'DAY');
 $night_label     = funnie_settings('hero_night_label', 'NIGHT');
 $day_tagline     = funnie_settings('hero_day_tagline',   '// professional');
@@ -61,10 +61,10 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
 
             <div class="day-hills">
                 <svg viewBox="0 0 1200 400" preserveAspectRatio="none" fill="none">
-                    <path d="M0,260 C150,210 300,250 450,225 C600,200 750,250 900,220 C1050,195 1140,225 1200,210 L1200,400 L0,400 Z" fill="#d97a4a" fill-opacity="0.55"/>
-                    <path d="M0,310 C200,270 350,310 520,285 C680,260 820,305 980,280 C1100,260 1160,285 1200,275 L1200,400 L0,400 Z" fill="#b85a25" fill-opacity="0.75"/>
-                    <path d="M0,360 C160,330 320,360 500,340 C680,320 840,355 1000,335 C1120,320 1170,340 1200,335 L1200,400 L0,400 Z" fill="#7a3210"/>
-                    <g fill="#3a1606" fill-opacity="0.4">
+                    <path d="M0,260 C150,210 300,250 450,225 C600,200 750,250 900,220 C1050,195 1140,225 1200,210 L1200,400 L0,400 Z" fill="#6fa66b"/>
+                    <path d="M0,310 C200,270 350,310 520,285 C680,260 820,305 980,280 C1100,260 1160,285 1200,275 L1200,400 L0,400 Z" fill="#4a8950"/>
+                    <path d="M0,360 C160,330 320,360 500,340 C680,320 840,355 1000,335 C1120,320 1170,340 1200,335 L1200,400 L0,400 Z" fill="#2e5d34"/>
+                    <g fill="#1d3b22" fill-opacity="0.4">
                         <rect x="79.6" y="241" width="0.8" height="2"/><polygon points="78,241 80,237 82,241"/>
                         <rect x="139.6" y="235" width="0.8" height="2"/><polygon points="138,235 140,231 142,235"/>
                         <rect x="209.6" y="234" width="0.8" height="2"/><polygon points="208,234 210,230 212,234"/>
@@ -80,7 +80,7 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
                         <rect x="1059.6" y="210" width="0.8" height="2"/><polygon points="1058,210 1060,206 1062,210"/>
                         <rect x="1149.6" y="214" width="0.8" height="2"/><polygon points="1148,214 1150,210 1152,214"/>
                     </g>
-                    <g fill="#3a1606" fill-opacity="0.72">
+                    <g fill="#163019" fill-opacity="0.72">
                         <rect x="59.4" y="300" width="1.2" height="3"/><polygon points="57,300 60,293 63,300"/>
                         <rect x="169.4" y="292" width="1.2" height="3"/><polygon points="167,292 170,285 173,292"/>
                         <rect x="269.4" y="294" width="1.2" height="3"/><polygon points="267,294 270,287 273,294"/>
@@ -93,7 +93,7 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
                         <rect x="1109.4" y="273" width="1.2" height="3"/><polygon points="1107,273 1110,266 1113,273"/>
                         <rect x="1179.4" y="278" width="1.2" height="3"/><polygon points="1177,278 1180,271 1183,278"/>
                     </g>
-                    <g fill="#3a1606">
+                    <g fill="#0f2114">
                         <rect x="69.25" y="354" width="1.5" height="4"/><polygon points="66,354 70,344 74,354"/>
                         <rect x="183.25" y="346" width="1.5" height="4"/><polygon points="180,346 184,336 188,346"/>
                         <rect x="224.25" y="346" width="1.5" height="4"/><polygon points="220,346 225,334 230,346"/>
@@ -118,8 +118,11 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
 
         <div class="sun-wrap" role="button" tabindex="0" aria-label="Switch to day mode"><div id="sun"></div></div>
 
-        <header class="full-only side-header">
-            <nav aria-label="Day sections" class="flex flex-wrap gap-6">
+        <header class="full-only side-header" data-open="false">
+            <button type="button" class="nav-toggle nav-toggle-day" aria-expanded="false" aria-controls="day-nav-menu" aria-label="Toggle menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
+            <nav id="day-nav-menu" aria-label="Day sections" class="flex flex-wrap gap-6">
                 <button type="button" data-open-panel="about" class="nav-link day-nav">About</button>
                 <button type="button" data-open-panel="resume" class="nav-link day-nav">Resume</button>
                 <button type="button" data-open-panel="blog-day" class="nav-link day-nav">Blog</button>
@@ -138,9 +141,9 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
             </button>
         </nav>
 
-        <div class="full-only wordmark wordmark-day" aria-hidden="true">
-            <span class="wordmark-line"><?php echo esc_html($wordmark_top); ?></span>
-            <span class="wordmark-line"><?php echo esc_html($wordmark_bottom); ?></span>
+        <div class="full-only logo logo-day" aria-hidden="true">
+            <span class="logo-line"><?php echo esc_html($logo_top); ?></span>
+            <span class="logo-line"><?php echo esc_html($logo_bottom); ?></span>
         </div>
 
         <div class="full-only big-heading">
@@ -184,9 +187,13 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
                 <span class="star" style="top:26%;left:90%;width:1px;height:1px;animation-delay:1.7s"></span>
             </div>
 
-            <div class="city">
-                <svg viewBox="0 0 1200 380" preserveAspectRatio="none" fill="none">
-                    <g fill="#0a2a3e" fill-opacity="0.85">
+        </div>
+
+        <!-- City + lamps live OUTSIDE .scenery so they escape its stacking context
+             and can paint above the moon (.scenery z=1, .moon-wrap z=2, these z=3). -->
+        <div class="city">
+            <svg viewBox="0 0 1200 380" preserveAspectRatio="none" fill="none">
+                <g fill="#0a2a3e" fill-opacity="0.85">
                         <rect x="0"   y="180" width="80"  height="200"/>
                         <rect x="80"  y="155" width="55"  height="225"/>
                         <rect x="135" y="200" width="70"  height="180"/>
@@ -292,20 +299,21 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
                 </div>
             </div>
 
-        </div>
-
         <div class="moon-wrap" role="button" tabindex="0" aria-label="Switch to night mode">
             <div id="moon"><div class="moon-phase-shadow" aria-hidden="true"></div></div>
         </div>
 
         <div class="shooting-stars" aria-hidden="true"></div>
 
-        <header class="full-only side-header" style="justify-content: flex-end;">
-            <nav aria-label="Night sections" class="flex flex-wrap gap-6">
+        <header class="full-only side-header" data-open="false" style="justify-content: flex-end;">
+            <nav id="night-nav-menu" aria-label="Night sections" class="flex flex-wrap gap-6">
                 <button type="button" data-open-panel="hardware" class="nav-link night-nav">Hardware</button>
                 <button type="button" data-open-panel="blog-night" class="nav-link night-nav">Blog</button>
                 <button type="button" data-open-panel="socials" class="nav-link night-nav">Socials</button>
             </nav>
+            <button type="button" class="nav-toggle nav-toggle-night" aria-expanded="false" aria-controls="night-nav-menu" aria-label="Toggle menu">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+            </button>
         </header>
 
         <nav class="collapsed-only sidebar-nav" aria-label="Night sections (compact)">
@@ -320,9 +328,9 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
             </button>
         </nav>
 
-        <div class="full-only wordmark wordmark-night" aria-hidden="true">
-            <span class="wordmark-line"><?php echo esc_html($wordmark_top); ?></span>
-            <span class="wordmark-line"><?php echo esc_html($wordmark_bottom); ?></span>
+        <div class="full-only logo logo-night" aria-hidden="true">
+            <span class="logo-line"><?php echo esc_html($logo_top); ?></span>
+            <span class="logo-line"><?php echo esc_html($logo_bottom); ?></span>
         </div>
 
         <div class="full-only big-heading">

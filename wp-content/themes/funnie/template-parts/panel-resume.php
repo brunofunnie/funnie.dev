@@ -45,8 +45,7 @@ $edu_period = funnie_settings('resume_edu_period', $default_education['period'])
 $edu_title  = funnie_settings('resume_edu_title',  $default_education['title']);
 $edu_school = funnie_settings('resume_edu_school', $default_education['school']);
 ?>
-<aside id="panel-resume" class="panel panel-day" data-side="day" role="dialog" aria-modal="true" aria-labelledby="panel-resume-title" hidden>
-    <button type="button" class="panel-close" aria-label="Close Resume panel">×</button>
+<section id="resume" class="panel panel-day" data-side="day" aria-labelledby="panel-resume-title">
     <h2 id="panel-resume-title" class="panel-title">Resume</h2>
     <div class="panel-body">
         <div class="mb-8 flex items-start justify-between gap-6">
@@ -85,4 +84,4 @@ $edu_school = funnie_settings('resume_edu_school', $default_education['school'])
             </div>
         </section>
     </div>
-</aside>
+</section>

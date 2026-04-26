@@ -31,8 +31,7 @@ $default_stack = [
 $stack = funnie_parse_rows(funnie_settings('about_stack'), ['kind', 'name']);
 if (!$stack) $stack = $default_stack;
 ?>
-<aside id="panel-about" class="panel panel-day" data-side="day" role="dialog" aria-modal="true" aria-labelledby="panel-about-title" hidden>
-    <button type="button" class="panel-close" aria-label="Close About panel">×</button>
+<section id="about" class="panel panel-day" data-side="day" aria-labelledby="panel-about-title">
     <h2 id="panel-about-title" class="panel-title">About</h2>
     <div class="panel-body">
         <div class="grid gap-10 md:grid-cols-[240px,1fr] md:items-start">
@@ -62,4 +61,4 @@ if (!$stack) $stack = $default_stack;
             </div>
         </div>
     </div>
-</aside>
+</section>

@@ -10,15 +10,59 @@
   const daySide = document.getElementById('day-side');
   const nightSide = document.getElementById('night-side');
 
+  // Last weather code returned by the API. Declared up here (before the
+  // no-hero early-exit) so async fetchWeather callbacks can write to it on
+  // single-post pages without hitting the temporal dead zone.
+  let lastApiCode = 0;
+
+  // Reusable lightsaber cursor — runs on every page that includes
+  // <div class="cursor-saber"> (rendered by footer.php). Browsers cap CSS
+  // cursor: url(...) at ~128px, so we render the original 310x310 GIFs as a
+  // position:fixed overlay that follows the mouse. Idle + ignited images
+  // live in the DOM stacked on top of each other; we toggle a class to fade
+  // between them so there's no src-swap GIF reload flash.
+  function initCursorSaber() {
+    const saber = document.querySelector('.cursor-saber');
+    if (!saber || !matchMedia('(hover: hover)').matches) return;
+    // Source idle GIF: visible saber bounding box starts at (34, 17) of 310px.
+    // At 64px display that's ~(7, 4); the rounded blade tip's center sits a
+    // few pixels further in, around (10, 5). Subtracting these offsets puts
+    // that exact pixel directly under the system mouse position.
+    const HOTSPOT_X = 10;
+    const HOTSPOT_Y = 5;
+    const POINTER_SEL = 'button, a, [role="button"], .nav-link, [data-open-panel], [data-scroll-to], .sun-wrap, .moon-wrap';
+
+    const setActive = (active) => saber.classList.toggle('is-active', active);
+
+    // `e.target` is always an Element for real DOM mouse events, but be
+    // defensive against synthetic dispatches (e.g. tests, devtools) where it
+    // might land on `document` and lack `.closest`.
+    const overPointer = (e) => !!(e.target && typeof e.target.closest === 'function' && e.target.closest(POINTER_SEL));
+
+    document.addEventListener('mousemove', (e) => {
+      saber.style.transform = `translate3d(${e.clientX - HOTSPOT_X}px, ${e.clientY - HOTSPOT_Y}px, 0)`;
+      saber.classList.add('is-visible');
+      setActive(overPointer(e));
+    }, { passive: true });
+
+    document.addEventListener('mouseleave', () => saber.classList.remove('is-visible'));
+    document.addEventListener('mouseenter', () => saber.classList.add('is-visible'));
+    document.addEventListener('mousedown', () => setActive(true));
+    document.addEventListener('mouseup',   (e) => setActive(overPointer(e)));
+  }
+  initCursorSaber();
+
   function modeForHour(h) { return (h >= 6 && h < 18) ? 'day' : 'night'; }
 
   // ── Time-driven sky / hills palette
   const SUNRISE_SKY  = ['#fde2c2', '#ffd1a3', '#ffb56b', '#ff9558', '#f0703a'];
-  const SUNRISE_HILL = { far: '#d97a4a', mid: '#b85a25', near: '#7a3210', pine: '#3a1606' };
+  const SUNRISE_HILL = { far: '#6fa66b', mid: '#4a8950', near: '#2e5d34', pine: '#163020' };
   const DAYLIGHT_SKY  = ['#9fd3ff', '#6fbcef', '#5ea7d8', '#9bd982', '#5ea64e'];
-  const DAYLIGHT_HILL = { far: '#5a8c5a', mid: '#3e6e3e', near: '#244824', pine: '#0e2a14' };
+  const DAYLIGHT_HILL = { far: '#6fa66b', mid: '#4a8950', near: '#2e5d34', pine: '#0f2114' };
   const NIGHT_SKY    = ['#050816', '#0c1238', '#142a5a', '#0e5460', '#0a7864'];
-  const NIGHT_HILL   = { far: '#1a2638', mid: '#101a2a', near: '#070d1a', pine: '#020610' };
+  // Night hills stay in the green family (deep forest) so the sunset transition
+  // shifts from bright green → dark green rather than green → blue-grey.
+  const NIGHT_HILL   = { far: '#1f3a26', mid: '#15291a', near: '#0c1c10', pine: '#040c06' };
 
   function blendHex(a, b, t) {
     const pa = [parseInt(a.slice(1,3),16), parseInt(a.slice(3,5),16), parseInt(a.slice(5,7),16)];
@@ -33,10 +77,11 @@
 
   function applySkyAndHills(hour) {
     let sky, hill, rays;
-    // During night hours the day side is collapsed to a sidebar; show the warm
-    // sunrise palette there as the default "day" preview.
+    // During night hours the day side is collapsed to a sidebar; show the
+    // daylight palette there so the mini scene mirrors the full day-side
+    // (same blue sky + green hills) instead of jumping to a dawn preview.
     if (hour < 6 || hour >= 18) {
-      sky = SUNRISE_SKY; hill = SUNRISE_HILL; rays = 1;
+      sky = DAYLIGHT_SKY; hill = DAYLIGHT_HILL; rays = 0;
     } else if (hour < 8) {
       sky = SUNRISE_SKY; hill = SUNRISE_HILL; rays = 1;
     } else if (hour < 17) {
@@ -67,11 +112,17 @@
   let timeOverride = false;
 
   // Position sun/moon along an arc based on hour. Day arc 06–18, night arc 18–06.
+  // On mobile (<=767px) the arc is skipped — CSS centers the active celestial
+  // and we just clear any stale inline style so the CSS rules win cleanly.
+  const isMobileView = () => window.matchMedia('(max-width: 767px)').matches;
   function placeCelestials(hour) {
     const isDay = hour >= 6 && hour < 18;
-    // Reset inline so collapsed-mode CSS rules apply for the non-dominant celestial.
+    // Always reset inline so collapsed-mode CSS rules apply for the non-dominant
+    // celestial (and so mobile gets a clean slate for the CSS centering rule).
     document.querySelector('.sun-wrap').removeAttribute('style');
     document.querySelector('.moon-wrap').removeAttribute('style');
+    if (isMobileView()) return;
+
     const wrap = isDay ? document.querySelector('#day-side .sun-wrap')
                        : document.querySelector('#night-side .moon-wrap');
     if (!wrap) return;
@@ -106,10 +157,69 @@
     let x;
     if (phase < 0.5) x = -phase * 200;          // waxing: shadow leaves to left
     else             x = (1 - phase) * 200;     // waning: shadow returns from right
-    const moon = document.getElementById('moon');
-    if (moon) moon.style.setProperty('--moon-shadow-x', x + '%');
+    // Set on :root so every moon-phase-shadow on the page picks it up via
+    // CSS variable inheritance — the hero moon AND the sticky-bar mini moon.
+    document.documentElement.style.setProperty('--moon-shadow-x', x + '%');
     const display = document.getElementById('phase-display');
     if (display) display.textContent = phaseName(phase);
+  }
+
+  // Pages without the hero (single posts, archives, search…) get a stripped-
+  // down setup: real-clock sky/hill palette, current moon phase, weather
+  // particles inside the sticky bar, and smooth scroll for in-page anchors.
+  // Placed after the palette consts and helper functions are initialized so
+  // applySkyAndHills/fetchWeather don't hit the temporal dead zone.
+  if (!hero) {
+    const initHourNH = realHour();
+    applySkyAndHills(initHourNH);
+    const initPhaseNH = moonPhase();
+    applyMoonPhase(initPhaseNH);
+    fetchWeather(-23.5015, -47.4526);
+
+    // Debug toolbox controls — same wiring as the front page, minus the
+    // celestial arc placement (no #hero on these pages). Sky tones, moon
+    // shadow, and weather all flow through CSS vars / body[data-weather],
+    // so the bar + footer scenery react live to the toolbox sliders.
+    const sliderNH       = document.getElementById('time-slider');
+    const timeDisplayNH  = document.getElementById('time-display');
+    const phaseSliderNH  = document.getElementById('phase-slider');
+    const weatherOverNH  = document.getElementById('weather-override');
+    function fmtClockNH(h) {
+      const hh = Math.floor(h);
+      const mm = Math.floor((h - hh) * 60);
+      return String(hh).padStart(2, '0') + ':' + String(mm).padStart(2, '0');
+    }
+    if (timeDisplayNH) timeDisplayNH.textContent = fmtClockNH(initHourNH);
+    if (sliderNH) {
+      sliderNH.value = initHourNH;
+      sliderNH.addEventListener('input', () => {
+        const h = parseFloat(sliderNH.value);
+        if (timeDisplayNH) timeDisplayNH.textContent = fmtClockNH(h);
+        applySkyAndHills(h);
+      });
+    }
+    if (phaseSliderNH) {
+      phaseSliderNH.value = initPhaseNH;
+      phaseSliderNH.addEventListener('input', () => applyMoonPhase(parseFloat(phaseSliderNH.value)));
+    }
+    if (weatherOverNH) {
+      weatherOverNH.addEventListener('change', () => {
+        if (weatherOverNH.value === '') applyWeather(lastApiCode);
+        else applyWeather(parseInt(weatherOverNH.value, 10));
+      });
+    }
+
+    document.querySelectorAll('[data-open-panel], [data-scroll-to]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        const id = e.currentTarget.dataset.openPanel || e.currentTarget.dataset.scrollTo;
+        if (!id) return;
+        const target = document.getElementById(id);
+        if (!target) return; // let the browser handle off-page hash links
+        e.preventDefault();
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+    return;
   }
 
   // Slider drives simulated hour (and optionally overrides clock time).
@@ -152,6 +262,12 @@
     setHour(h, false);
   }, 60_000);
 
+  // Re-place the celestial when crossing the mobile breakpoint so the
+  // mobile-centered position and the desktop arc swap cleanly on resize.
+  window.addEventListener('resize', () => {
+    placeCelestials(slider ? parseFloat(slider.value) : realHour());
+  });
+
   // Clicking the collapsed celestial swaps day/night by jumping the slider.
   const sunWrap = daySide.querySelector('.sun-wrap');
   const moonWrap = nightSide.querySelector('.moon-wrap');
@@ -188,147 +304,133 @@
   });
 
 
-  const backdrop = document.getElementById('panel-backdrop');
-  const panels = {
-    about: document.getElementById('panel-about'),
-    resume: document.getElementById('panel-resume'),
-    hardware: document.getElementById('panel-hardware'),
-    'blog-day': document.getElementById('panel-blog-day'),
-    'blog-night': document.getElementById('panel-blog-night'),
-    socials: document.getElementById('panel-socials'),
-  };
-  let activePanelId = null;
-  let lastTrigger = null;
-
-  function openPanel(id, trigger) {
-    if (activePanelId) closePanel({ restoreFocus: false });
-    const panel = panels[id];
-    if (!panel) return;
-    lastTrigger = trigger || null;
-    // Blog is the only panel reachable from both sides — retheme to match current mode.
-    if (id === 'blog') {
-      const isDay = document.body.dataset.time === 'day';
-      panel.classList.toggle('panel-day', isDay);
-      panel.classList.toggle('panel-night', !isDay);
-      panel.dataset.side = isDay ? 'day' : 'night';
-    }
-    panel.hidden = false;
-    requestAnimationFrame(() => panel.classList.add('is-open'));
-    backdrop.classList.add('is-visible');
-    activePanelId = id;
-    const closeBtn = panel.querySelector('.panel-close');
-    if (closeBtn) closeBtn.focus();
+  // In-page navigation: clicking any [data-open-panel] or [data-scroll-to]
+  // smooth-scrolls to the section whose id matches the value. The "panel"
+  // attribute name is kept on the hero buttons for backwards compatibility
+  // with the previous modal-based markup; it now means "scroll target id".
+  function scrollToSection(id) {
+    if (!id) return;
+    const target = id === 'hero'
+      ? document.getElementById('hero') || document.body
+      : document.getElementById(id);
+    if (!target) return;
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-
-  function closePanel({ restoreFocus = true } = {}) {
-    if (!activePanelId) return;
-    const panel = panels[activePanelId];
-    panel.classList.remove('is-open');
-    backdrop.classList.remove('is-visible');
-    const onEnd = () => {
-      panel.hidden = true;
-      panel.removeEventListener('transitionend', onEnd);
-    };
-    panel.addEventListener('transitionend', onEnd);
-
-    if (panel.matches('[data-blog-panel]')) {
-      const blogBody = panel.querySelector('.panel-body');
-      const listSection = blogBody.querySelector('[data-blog-section="list"]');
-      const detailSection = blogBody.querySelector('[data-blog-section="detail"]');
-      blogBody.dataset.blogView = 'list';
-      if (listSection) listSection.hidden = false;
-      if (detailSection) detailSection.hidden = true;
-    }
-
-    activePanelId = null;
-    if (restoreFocus && lastTrigger) lastTrigger.focus();
-    lastTrigger = null;
-  }
-
-  document.querySelectorAll('[data-open-panel]').forEach((btn) => {
+  document.querySelectorAll('[data-open-panel], [data-scroll-to]').forEach((btn) => {
     btn.addEventListener('click', (e) => {
-      openPanel(e.currentTarget.dataset.openPanel, e.currentTarget);
+      const id = e.currentTarget.dataset.openPanel || e.currentTarget.dataset.scrollTo;
+      // For real anchor tags let the browser handle hash navigation too —
+      // but smooth-scroll first to override the default jump.
+      if (e.currentTarget.tagName === 'A') e.preventDefault();
+      scrollToSection(id);
     });
   });
 
-  document.querySelectorAll('.panel-close').forEach((btn) => {
-    btn.addEventListener('click', () => closePanel());
+  // Reveal the sticky bar when the hero's side-header has scrolled out of
+  // view. Threshold is recomputed from the currently-visible side-header
+  // (the inactive side's header is display:none, so we pick whichever has
+  // a layout box). Recomputed on resize and on day↔night swap.
+  function getHeaderThreshold() {
+    const headers = document.querySelectorAll('.side-header.full-only');
+    let visible = null;
+    headers.forEach((h) => { if (h.offsetParent !== null) visible = h; });
+    if (!visible) return 100;
+    const r = visible.getBoundingClientRect();
+    return Math.max(0, Math.round(r.bottom + window.scrollY));
+  }
+  let heroThreshold = getHeaderThreshold();
+  function updateHeroPassed() {
+    const passed = window.scrollY > heroThreshold;
+    document.body.classList.toggle('hero-passed', passed);
+  }
+  window.addEventListener('scroll', updateHeroPassed, { passive: true });
+  window.addEventListener('resize', () => {
+    heroThreshold = getHeaderThreshold();
+    updateHeroPassed();
   });
+  // Recompute when the time mode flips, since which header has layout changes.
+  const heroEl = document.getElementById('hero');
+  if (heroEl) {
+    new MutationObserver(() => {
+      heroThreshold = getHeaderThreshold();
+      updateHeroPassed();
+    }).observe(heroEl, { attributes: true, attributeFilter: ['data-time'] });
+  }
+  updateHeroPassed();
 
-  backdrop.addEventListener('click', () => closePanel());
-
-  document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && activePanelId) closePanel();
+  // Scroll-spy: highlight the bar nav button matching the section the user
+  // is reading. Rule: the section whose top has most recently crossed the
+  // sticky-bar bottom (~150px from viewport top) wins. The inactive
+  // content-block has display:none so its sections have no layout — they're
+  // skipped automatically.
+  const SCROLLSPY_OFFSET = 150;
+  const barLinks = Array.from(document.querySelectorAll('.bar-nav .nav-link[data-scroll-to]'));
+  const sectionTargets = [];
+  barLinks.forEach((link) => {
+    const id = link.dataset.scrollTo;
+    if (!id || id === 'hero') return;
+    const el = document.getElementById(id);
+    if (el && !sectionTargets.includes(el)) sectionTargets.push(el);
   });
-
-  document.querySelectorAll('[data-blog-panel]').forEach((blogPanel) => {
-    const side = blogPanel.dataset.side || 'night';
-    const blogBody = blogPanel.querySelector('.panel-body');
-    const listSection = blogBody.querySelector('[data-blog-section="list"]');
-    const detailSection = blogBody.querySelector('[data-blog-section="detail"]');
-    const detailContent = blogBody.querySelector('[data-blog-detail-content]');
-    const backBtn = blogBody.querySelector('[data-blog-back]');
-    const postsRaw = blogPanel.querySelector('script[data-blog-posts]');
-    const inlinePosts = postsRaw ? JSON.parse(postsRaw.textContent) : {};
-    const restUrl = postsRaw ? postsRaw.dataset.restUrl : '';
-    const cache = new Map();
-
-    function renderDetail(post) {
-      detailContent.innerHTML = `
-        <div class="font-mono text-xs uppercase tracking-[0.2em] text-${side}-muted">${post.date}</div>
-        <h3 class="mt-1 text-3xl font-bold tracking-tight">${post.title}</h3>
-        <div class="mt-6 space-y-4 text-base leading-relaxed text-${side}-text">${post.body}</div>
-      `;
+  if (sectionTargets.length) {
+    function updateScrollspy() {
+      const trigger = window.scrollY + SCROLLSPY_OFFSET;
+      // When the user has scrolled to the very bottom, the last section's
+      // top may never reach the trigger line — fall back to picking the
+      // last visible section so it still highlights.
+      const atBottom = (window.scrollY + window.innerHeight) >= document.documentElement.scrollHeight - 4;
+      let bestId = null;
+      let bestTop = -Infinity;
+      sectionTargets.forEach((el) => {
+        // offsetParent is null when the element (or an ancestor) is
+        // display:none — skip those so the inactive side doesn't activate
+        // its bar links by mistake.
+        if (el.offsetParent === null) return;
+        const top = el.getBoundingClientRect().top + window.scrollY;
+        const eligible = atBottom ? true : top <= trigger;
+        if (eligible && top > bestTop) { bestTop = top; bestId = el.id; }
+      });
+      barLinks.forEach((l) => l.classList.toggle('is-current', l.dataset.scrollTo === bestId));
     }
+    window.addEventListener('scroll', updateScrollspy, { passive: true });
+    window.addEventListener('resize', updateScrollspy);
+    // Re-run when day/night flips (different sections become visible).
+    new MutationObserver(updateScrollspy).observe(heroEl, { attributes: true, attributeFilter: ['data-time'] });
+    updateScrollspy();
+  }
 
-    function showBlogList() {
-      blogBody.dataset.blogView = 'list';
-      detailSection.hidden = true;
-      listSection.hidden = false;
-    }
-
-    async function showBlogPost(id) {
-      blogBody.dataset.blogView = 'detail';
-      listSection.hidden = true;
-      detailSection.hidden = false;
-      backBtn.focus();
-
-      if (cache.has(id)) {
-        renderDetail(cache.get(id));
-        return;
+  // Mobile hamburger toggle for each side-header. Closing routes through a
+  // `closing` state so the staggered fade-out animation can play before the
+  // nav is actually hidden. Total close duration must match the longest CSS
+  // animation-delay (210ms) plus the animation duration (220ms).
+  const NAV_CLOSE_MS = 450;
+  function closeMenu(header) {
+    if (!header) return;
+    header.setAttribute('data-open', 'closing');
+    const toggle = header.querySelector('.nav-toggle');
+    if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    setTimeout(() => {
+      // Guard against the user re-opening the menu mid-animation.
+      if (header.getAttribute('data-open') === 'closing') {
+        header.setAttribute('data-open', 'false');
       }
-
-      const inline = inlinePosts[id];
-      if (inline && inline.body) {
-        cache.set(id, inline);
-        renderDetail(inline);
-        return;
+    }, NAV_CLOSE_MS);
+  }
+  document.querySelectorAll('.nav-toggle').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const header = btn.closest('.side-header');
+      if (!header) return;
+      const isOpen = header.getAttribute('data-open') === 'true';
+      if (isOpen) {
+        closeMenu(header);
+      } else {
+        header.setAttribute('data-open', 'true');
+        btn.setAttribute('aria-expanded', 'true');
       }
-
-      if (!restUrl) return;
-
-      detailContent.innerHTML = `<p class="text-${side}-muted">Loading…</p>`;
-
-      try {
-        const res = await fetch(`${restUrl}/${encodeURIComponent(id)}?_fields=date,title,content`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = await res.json();
-        const post = {
-          date: (data.date || '').slice(0, 10),
-          title: data.title?.rendered || '',
-          body: data.content?.rendered || '',
-        };
-        cache.set(id, post);
-        renderDetail(post);
-      } catch (err) {
-        detailContent.innerHTML = `<p class="text-${side}-muted">Could not load this post.</p>`;
-      }
-    }
-
-    blogBody.querySelectorAll('[data-blog-open]').forEach((btn) => {
-      btn.addEventListener('click', (e) => showBlogPost(e.currentTarget.dataset.blogOpen));
     });
-    if (backBtn) backBtn.addEventListener('click', showBlogList);
+  });
+  document.querySelectorAll('.side-header .nav-link').forEach((link) => {
+    link.addEventListener('click', () => closeMenu(link.closest('.side-header')));
   });
 
   const discordModal = document.getElementById('discord-modal');
@@ -442,26 +544,38 @@
       widget.querySelector('.weather-condition').textContent = info.label;
     }
 
-    // Particles. Counts scale with intensity; storm and showers get extra.
-    const rainHost = document.querySelector('.fx-rain');
-    const snowHost = document.querySelector('.fx-snow');
+    // Particles spawn into EVERY .fx-rain / .fx-snow host on the page —
+    // there's one in the hero scenery and one in each sticky bar so rain
+    // shows in both places. Counts scale with intensity (storm gets the most).
+    const rainHosts = document.querySelectorAll('.fx-rain');
+    const snowHosts = document.querySelectorAll('.fx-snow');
     const isRainBucket = /^(drizzle|rain|showers)-/.test(info.bucket) || info.bucket === 'storm';
     const isSnowBucket = /^snow-/.test(info.bucket);
-    if (rainHost) {
+    rainHosts.forEach((host) => {
       if (isRainBucket) {
-        const base = info.bucket.startsWith('drizzle') ? 30
-                  : info.bucket === 'storm'           ? 240
-                  : info.bucket.startsWith('showers') ? 60 + info.intensity * 50
-                  :                                     50 + info.intensity * 60;
-        spawnParticles(rainHost, base, () => buildRain(info.intensity));
+        // Bars are tiny (~90px tall) — keep them lighter so they don't get
+        // overwhelmed with drops. The hero gets the full count.
+        const isBar = host.closest('.bar-weather-fx') !== null;
+        const full = info.bucket.startsWith('drizzle') ? 30
+                   : info.bucket === 'storm'           ? 240
+                   : info.bucket.startsWith('showers') ? 60 + info.intensity * 50
+                   :                                     50 + info.intensity * 60;
+        const count = isBar ? Math.max(8, Math.round(full * 0.18)) : full;
+        spawnParticles(host, count, () => buildRain(info.intensity));
       } else {
-        rainHost.innerHTML = '';
+        host.innerHTML = '';
       }
-    }
-    if (snowHost) {
-      if (isSnowBucket) spawnParticles(snowHost, 30 + info.intensity * 35, buildSnow);
-      else snowHost.innerHTML = '';
-    }
+    });
+    snowHosts.forEach((host) => {
+      if (isSnowBucket) {
+        const isBar = host.closest('.bar-weather-fx') !== null;
+        const full = 30 + info.intensity * 35;
+        const count = isBar ? Math.max(6, Math.round(full * 0.25)) : full;
+        spawnParticles(host, count, buildSnow);
+      } else {
+        host.innerHTML = '';
+      }
+    });
   }
 
   function renderWeather(temp, code) {
@@ -469,7 +583,6 @@
     const widget = document.querySelector('.weather[data-weather]');
     if (widget) widget.querySelector('.weather-temp').textContent = Math.round(temp) + '°';
   }
-  let lastApiCode = 0;
   function fetchWeather(lat, lon) {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
     fetch(url).then((r) => r.json()).then((data) => {
@@ -554,12 +667,19 @@
   scheduleBirds();
 
   // ---- Shooting stars (night side only) ----
-  const shootingContainer = document.querySelector('.shooting-stars');
+  // Multiple hosts now: the hero's .shooting-stars + the site-footer's. Pick
+  // one at random per spawn so meteors appear across both regions.
+  function getShootingHosts() {
+    return Array.from(document.querySelectorAll('.shooting-stars'))
+      .filter((el) => el.offsetParent !== null);
+  }
 
   function spawnShootingStar() {
-    if (!shootingContainer) return;
     if (document.body.dataset.time !== 'night') return;
     if (document.hidden) return;
+    const hosts = getShootingHosts();
+    if (!hosts.length) return;
+    const shootingContainer = hosts[Math.floor(Math.random() * hosts.length)];
 
     const star = document.createElement('span');
     star.className = 'shooting-star';
@@ -596,36 +716,4 @@
   }
   scheduleShootingStars();
 
-  // ---- Custom lightsaber cursor ----
-  // Browsers cap CSS cursor: url(...) at ~128px, so the original 310x310 GIFs
-  // are rendered as a position:fixed <div> that follows the mouse instead.
-  // Both idle + ignited images live in the DOM stacked on top of each other;
-  // we toggle a class to fade between them (no src swap → no GIF reload flash).
-  const saber = document.querySelector('.cursor-saber');
-  if (saber && matchMedia('(hover: hover)').matches) {
-    // Source idle GIF: visible saber bounding box starts at (34, 17) of 310px.
-    // At 64px display that's ~(7, 4); the rounded blade tip's center sits a
-    // few pixels further in, around (10, 5). Subtracting these offsets puts
-    // that exact pixel directly under the system mouse position.
-    const HOTSPOT_X = 10;
-    const HOTSPOT_Y = 5;
-    const POINTER_SEL = 'button, a, [role="button"], .nav-link, .panel-close, [data-open-panel], .sun-wrap, .moon-wrap';
-
-    function setActive(active) {
-      saber.classList.toggle('is-active', active);
-    }
-
-    document.addEventListener('mousemove', (e) => {
-      saber.style.transform = `translate3d(${e.clientX - HOTSPOT_X}px, ${e.clientY - HOTSPOT_Y}px, 0)`;
-      saber.classList.add('is-visible');
-      setActive(!!e.target.closest(POINTER_SEL));
-    }, { passive: true });
-
-    document.addEventListener('mouseleave', () => saber.classList.remove('is-visible'));
-    document.addEventListener('mouseenter', () => saber.classList.add('is-visible'));
-
-    // Mousedown briefly intensifies the blade (always ignited while pressed).
-    document.addEventListener('mousedown', () => setActive(true));
-    document.addEventListener('mouseup',   (e) => setActive(!!e.target.closest(POINTER_SEL)));
-  }
 })();

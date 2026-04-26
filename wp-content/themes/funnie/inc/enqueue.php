@@ -10,18 +10,23 @@ add_action('wp_enqueue_scripts', function () {
         null
     );
 
+    // Use filemtime() so every edit busts the browser cache during dev — the
+    // theme version alone never changes between CSS/JS tweaks.
+    $css_path = FUNNIE_THEME_DIR . '/assets/css/main.css';
+    $js_path  = FUNNIE_THEME_DIR . '/assets/js/main.js';
+
     wp_enqueue_style(
         'funnie-main',
         FUNNIE_THEME_URL . '/assets/css/main.css',
         ['funnie-google-fonts'],
-        FUNNIE_THEME_VERSION
+        file_exists($css_path) ? (string) filemtime($css_path) : FUNNIE_THEME_VERSION
     );
 
     wp_enqueue_script(
         'funnie-main',
         FUNNIE_THEME_URL . '/assets/js/main.js',
         [],
-        FUNNIE_THEME_VERSION,
+        file_exists($js_path) ? (string) filemtime($js_path) : FUNNIE_THEME_VERSION,
         true
     );
 

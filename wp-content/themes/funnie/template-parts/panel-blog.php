@@ -43,9 +43,10 @@ if ($blog_query->have_posts()) {
         $blog_query->the_post();
         $id = (string) get_the_ID();
         $posts_data[$id] = [
-            'date'    => get_the_date('Y-m-d'),
-            'title'   => get_the_title(),
-            'excerpt' => wp_strip_all_tags(get_the_excerpt()),
+            'date'      => get_the_date('Y-m-d'),
+            'title'     => get_the_title(),
+            'excerpt'   => wp_strip_all_tags(get_the_excerpt()),
+            'permalink' => get_permalink(),
         ];
     }
     wp_reset_postdata();
@@ -58,47 +59,27 @@ $accent_class = 'text-' . $side . '-accent';
 $border_class = 'border-' . $side . '-border';
 $surface_class = 'bg-' . $side . '-surface';
 ?>
-<aside id="<?php echo esc_attr($panel_id); ?>" class="panel panel-<?php echo esc_attr($side); ?>" data-side="<?php echo esc_attr($side); ?>" data-blog-panel role="dialog" aria-modal="true" aria-labelledby="<?php echo esc_attr($title_id); ?>" hidden>
-    <button type="button" class="panel-close" aria-label="Close Blog panel">×</button>
+<section id="<?php echo esc_attr($panel_id); ?>" class="panel panel-<?php echo esc_attr($side); ?>" data-side="<?php echo esc_attr($side); ?>" data-blog-panel aria-labelledby="<?php echo esc_attr($title_id); ?>">
     <h2 id="<?php echo esc_attr($title_id); ?>" class="panel-title">Blog</h2>
-    <div class="panel-body" data-blog-view="list">
-
-        <div data-blog-section="list">
-            <p class="mb-8 max-w-prose <?php echo esc_attr($muted_class); ?>"><?php echo esc_html($intro); ?></p>
-            <?php if (!empty($posts_data)): ?>
-                <ul class="space-y-4">
-                    <?php foreach ($posts_data as $id => $p): ?>
-                        <li>
-                            <button type="button" data-blog-open="<?php echo esc_attr($id); ?>" class="block w-full rounded-lg border <?php echo esc_attr($border_class . ' ' . $surface_class); ?> p-5 text-left transition hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(167,139,250,0.25)]">
-                                <div class="font-mono text-xs uppercase tracking-[0.2em] <?php echo esc_attr($muted_class); ?>"><?php echo esc_html($p['date']); ?></div>
-                                <div class="mt-1 text-lg font-bold"><?php echo esc_html($p['title']); ?></div>
-                                <p class="mt-2 text-sm <?php echo esc_attr($muted_class); ?>"><?php echo esc_html($p['excerpt']); ?></p>
-                                <span class="mt-3 inline-block font-mono text-xs uppercase tracking-[0.2em] <?php echo esc_attr($accent_class); ?>">Read →</span>
-                            </button>
-                        </li>
-                    <?php endforeach; ?>
-                </ul>
-            <?php else: ?>
-                <p class="<?php echo esc_attr($muted_class); ?>"><em>Nothing posted here yet.</em></p>
-            <?php endif; ?>
-        </div>
-
-        <article data-blog-section="detail" hidden>
-            <button type="button" data-blog-back class="mb-6 font-mono text-xs uppercase tracking-[0.2em] <?php echo esc_attr($accent_class); ?>">← Back to posts</button>
-            <div data-blog-detail-content></div>
-        </article>
-
-        <script type="application/json" data-blog-posts data-rest-url="<?php echo esc_url(rest_url('wp/v2/posts')); ?>">
-        <?php
-        $json_payload = [];
-        foreach ($posts_data as $id => $p) {
-            if (!empty($p['body'])) {
-                $json_payload[$id] = ['date' => $p['date'], 'title' => $p['title'], 'body' => $p['body']];
-            }
-        }
-        echo wp_json_encode($json_payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_FORCE_OBJECT);
-        ?>
-        </script>
-
+    <div class="panel-body">
+        <p class="mb-8 max-w-prose <?php echo esc_attr($muted_class); ?>"><?php echo esc_html($intro); ?></p>
+        <?php if (!empty($posts_data)): ?>
+            <ul class="space-y-4">
+                <?php foreach ($posts_data as $id => $p):
+                    $href = !empty($p['permalink']) ? $p['permalink'] : '#';
+                ?>
+                    <li>
+                        <a href="<?php echo esc_url($href); ?>" class="block w-full rounded-lg border <?php echo esc_attr($border_class . ' ' . $surface_class); ?> p-5 text-left transition hover:-translate-y-1 hover:shadow-[0_0_30px_rgba(167,139,250,0.25)] no-underline">
+                            <div class="font-mono text-xs uppercase tracking-[0.2em] <?php echo esc_attr($muted_class); ?>"><?php echo esc_html($p['date']); ?></div>
+                            <div class="mt-1 text-lg font-bold"><?php echo esc_html($p['title']); ?></div>
+                            <p class="mt-2 text-sm <?php echo esc_attr($muted_class); ?>"><?php echo esc_html($p['excerpt']); ?></p>
+                            <span class="mt-3 inline-block font-mono text-xs uppercase tracking-[0.2em] <?php echo esc_attr($accent_class); ?>">Read →</span>
+                        </a>
+                    </li>
+                <?php endforeach; ?>
+            </ul>
+        <?php else: ?>
+            <p class="<?php echo esc_attr($muted_class); ?>"><em>Nothing posted here yet.</em></p>
+        <?php endif; ?>
     </div>
-</aside>
+</section>

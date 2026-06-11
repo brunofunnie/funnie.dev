@@ -45,9 +45,9 @@ acf_add_local_field_group([
     'fields'   => [
         ['key' => 'field_resume_intro',     'name' => 'resume_intro',     'label' => 'Intro line', 'type' => 'text'],
         ['key' => 'field_resume_pdf_url',   'name' => 'resume_pdf_url',   'label' => 'PDF download URL', 'type' => 'url'],
-        ['key' => 'field_resume_edu_period','name' => 'resume_edu_period','label' => 'Education — period', 'type' => 'text', 'default_value' => '2014 — 2018'],
-        ['key' => 'field_resume_edu_title', 'name' => 'resume_edu_title', 'label' => 'Education — title',  'type' => 'text', 'default_value' => 'B.Sc. Computer Science'],
-        ['key' => 'field_resume_edu_school','name' => 'resume_edu_school','label' => 'Education — school', 'type' => 'text', 'default_value' => 'Placeholder University'],
+        ['key' => 'field_resume_edu_period','name' => 'resume_edu_period','label' => 'Education — period', 'type' => 'text', 'default_value' => '2015 — 2019'],
+        ['key' => 'field_resume_edu_title', 'name' => 'resume_edu_title', 'label' => 'Education — title',  'type' => 'text', 'default_value' => "Bachelor's in Information Systems"],
+        ['key' => 'field_resume_edu_school','name' => 'resume_edu_school','label' => 'Education — school', 'type' => 'text', 'default_value' => 'Centro Universitário Fametro'],
     ],
 ]);
 
@@ -85,6 +85,7 @@ acf_add_local_field_group([
         ['key' => 'field_socials_instagram_handle', 'name' => 'socials_instagram_handle', 'label' => 'Instagram handle', 'type' => 'text'],
         ['key' => 'field_socials_github_url',       'name' => 'socials_github_url',       'label' => 'GitHub URL', 'type' => 'url'],
         ['key' => 'field_socials_github_handle',    'name' => 'socials_github_handle',    'label' => 'GitHub handle', 'type' => 'text'],
+        ['key' => 'field_socials_discord_url',      'name' => 'socials_discord_url',      'label' => 'Discord URL (server invite or profile)', 'type' => 'url'],
         ['key' => 'field_socials_discord_label',    'name' => 'socials_discord_label',    'label' => 'Discord card subtitle', 'type' => 'text'],
         ['key' => 'field_discord_handle',           'name' => 'discord_handle',           'label' => 'Discord username (used in modal + copy)', 'type' => 'text'],
         ['key' => 'field_contact_email',            'name' => 'contact_email',            'label' => 'Contact email', 'type' => 'email'],

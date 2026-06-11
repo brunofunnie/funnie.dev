@@ -3,6 +3,7 @@
 
 # Env
 .env
+.env.deploy
 
 # WordPress (served from named volumes, not version-controlled)
 wp-content/uploads/

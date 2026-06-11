@@ -15,6 +15,7 @@ require_once FUNNIE_THEME_DIR . '/inc/taxonomies.php';
 require_once FUNNIE_THEME_DIR . '/inc/site-settings.php';
 require_once FUNNIE_THEME_DIR . '/inc/image-helpers.php';
 require_once FUNNIE_THEME_DIR . '/inc/parse-helpers.php';
+require_once FUNNIE_THEME_DIR . '/inc/archive-filters.php';
 
 add_action('after_setup_theme', function () {
     add_theme_support('title-tag');

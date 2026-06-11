@@ -2,16 +2,17 @@
 if (!defined('ABSPATH')) exit;
 
 $avatar_field = funnie_image(funnie_settings('about_avatar'));
-$avatar_url   = $avatar_field['url'] ?? (FUNNIE_THEME_URL . '/assets/avatar-bo.svg');
+$avatar_url   = $avatar_field['url'] ?? (FUNNIE_THEME_URL . '/assets/images/funnie-photo.png');
 $avatar_alt   = $avatar_field['alt'] ?? 'Bruno Oliveira';
 
 $display_name = funnie_settings('about_name',  'Bruno Oliveira');
 $alias        = funnie_settings('about_alias', 'aka Funnie');
 
 $default_paragraphs = [
-    'I build for the web. The work spans interfaces that respond to a single hover, systems that survive a million of them, and the small interactions in between that make the rest feel alive.',
-    'I have been writing code professionally for the better part of a decade across startups and product teams. I care about clarity, type-safety where it earns its keep, and shipping things that actually feel good to use.',
-    'Right now I am most interested in the seams between design and engineering — building tools that respect the craft of both, and writing software that is honest about how it works.',
+    'Senior Software Engineer with 10+ years building scalable web applications and REST APIs in PHP and Node.js — for companies like Jabil, Coca-Cola, and Alcatel Mobile, plus a long tail of smaller teams that taught me what actually breaks in production.',
+    'Comfortable across the stack: Laravel, Symfony, and Express on the back end; Vue, React, and React Native on the front. Microservices when the system warrants it, Docker when the team does, and AWS when the bill clears.',
+    'Earlier in my career I worked as an information security analyst — penetration testing, social engineering, ISO/IEC 27001/27015. That lens has stuck. Right now I am most interested in AI-assisted development: spec-driven workflows, prompt harnesses, and context engineering for code generation that actually ships.',
+    'Based in Sorocaba, Brazil. I write Portuguese natively, English bilingually, and Spanish well enough to argue.',
 ];
 $paragraphs_text = funnie_settings('about_paragraphs');
 $paragraphs = $paragraphs_text
@@ -19,14 +20,22 @@ $paragraphs = $paragraphs_text
     : $default_paragraphs;
 
 $default_stack = [
-    ['kind' => 'language',  'name' => 'JavaScript'],
-    ['kind' => 'language',  'name' => 'TypeScript'],
-    ['kind' => 'framework', 'name' => 'React'],
-    ['kind' => 'runtime',   'name' => 'Node.js'],
-    ['kind' => 'styling',   'name' => 'Tailwind CSS'],
-    ['kind' => 'language',  'name' => 'Rust'],
-    ['kind' => 'database',  'name' => 'PostgreSQL'],
-    ['kind' => 'cloud',     'name' => 'AWS'],
+    ['kind' => 'language',   'name' => 'PHP'],
+    ['kind' => 'language',   'name' => 'JavaScript'],
+    ['kind' => 'framework',  'name' => 'Laravel'],
+    ['kind' => 'framework',  'name' => 'Symfony'],
+    ['kind' => 'runtime',    'name' => 'Node.js'],
+    ['kind' => 'framework',  'name' => 'Vue.js'],
+    ['kind' => 'framework',  'name' => 'React'],
+    ['kind' => 'mobile',     'name' => 'React Native'],
+    ['kind' => 'database',   'name' => 'MySQL'],
+    ['kind' => 'database',   'name' => 'PostgreSQL'],
+    ['kind' => 'database',   'name' => 'MongoDB'],
+    ['kind' => 'cache',      'name' => 'Redis'],
+    ['kind' => 'cloud',      'name' => 'AWS'],
+    ['kind' => 'devops',     'name' => 'Docker'],
+    ['kind' => 'security',   'name' => 'PenTest'],
+    ['kind' => 'practice',   'name' => 'AI-assisted dev'],
 ];
 $stack = funnie_parse_rows(funnie_settings('about_stack'), ['kind', 'name']);
 if (!$stack) $stack = $default_stack;
@@ -36,7 +45,7 @@ if (!$stack) $stack = $default_stack;
     <div class="panel-body">
         <div class="grid gap-10 md:grid-cols-[240px,1fr] md:items-start">
             <div class="flex flex-col items-center md:items-start">
-                <img src="<?php echo esc_url($avatar_url); ?>" alt="<?php echo esc_attr($avatar_alt); ?>" class="h-60 w-60 rounded-full" />
+                <img src="<?php echo esc_url($avatar_url); ?>" alt="<?php echo esc_attr($avatar_alt); ?>" class="h-60 w-60 rounded-full object-cover" />
                 <div class="mt-6 text-center md:text-left">
                     <div class="text-2xl font-bold tracking-tight"><?php echo esc_html($display_name); ?></div>
                     <div class="font-mono text-xs uppercase tracking-[0.2em] text-day-muted"><?php echo esc_html($alias); ?></div>

@@ -32,7 +32,7 @@ echo "== Smoke tests =="
 check_200 "$BASE/"
 check_200 "$BASE/wp-login.php"
 
-for id in hero panel-about panel-resume panel-hardware panel-blog-day panel-blog-night panel-socials; do
+for id in hero panel-about panel-hardware panel-blog-day panel-blog-night panel-socials; do
   check_contains "$BASE/" "id=\"$id\""
 done
 

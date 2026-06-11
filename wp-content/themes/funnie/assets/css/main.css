@@ -184,8 +184,8 @@ select, option, textarea, input {
   pointer-events: none;
   z-index: 1;
 }
-#day-side > :not(.scenery):not(.sun-wrap):not(.moon-wrap):not(.sidebar-nav):not(.shooting-stars):not(.city):not(.lamps):not(.side-header):not(.side-footer):not(.logo),
-#night-side > :not(.scenery):not(.sun-wrap):not(.moon-wrap):not(.sidebar-nav):not(.shooting-stars):not(.city):not(.lamps):not(.side-header):not(.side-footer):not(.logo) { position: relative; z-index: 2; }
+#day-side > :not(.scenery):not(.sun-wrap):not(.moon-wrap):not(.sidebar-nav):not(.shooting-stars):not(.city):not(.lamps):not(.side-header):not(.side-footer):not(.logo):not(.hero-weather),
+#night-side > :not(.scenery):not(.sun-wrap):not(.moon-wrap):not(.sidebar-nav):not(.shooting-stars):not(.city):not(.lamps):not(.side-header):not(.side-footer):not(.logo):not(.hero-weather) { position: relative; z-index: 2; }
 
 /* Day clouds */
 .cloud {
@@ -919,6 +919,13 @@ body.no-hero      .sticky-bar { transform: translateY(0); }
 }
 .bar-celestial, .bar-logo, .bar-page-title { position: relative; z-index: 2; }
 
+/* Night sticky bar: push the weather widget to the far right edge so the
+   nav sits in the middle and weather hugs the right side. The .bar-nav's
+   own margin-left: auto plus this auto split the free space evenly between
+   "before nav" and "before weather". Day side keeps weather flush against
+   the nav (no extra auto). */
+.sticky-bar-night .bar-weather { margin-left: auto; }
+
 /* Page-section label that sits next to the logo (e.g. "Blog" on a post).
    Plain text in the same family as the post title, just smaller — not a
    pill or button. */
@@ -1118,6 +1125,92 @@ body.no-hero .content-block { padding-top: 4rem; }
 }
 .copy-btn:hover { background: rgba(167, 139, 250, 0.12); }
 .copy-btn[data-copied="true"] { background: rgba(110, 231, 255, 0.15); }
+
+/* Blog / archive post-link hover — side-aware tint + accent text.
+ * Centralised here (rather than via Tailwind utilities) so the hover
+ * colours are obvious in one place and we avoid Play CDN's quirks
+ * with PHP-concatenated dynamic class names. */
+.post-link {
+  color: inherit;
+  text-decoration: none;
+  border-radius: 0.4rem;
+  transition: background-color 220ms ease, color 220ms ease;
+}
+.post-link .post-link-title {
+  transition: color 220ms ease;
+}
+.post-link .post-link-date {
+  transition: color 220ms ease, opacity 220ms ease;
+}
+
+.panel-day .post-link:hover,
+.panel-day .post-link:focus-visible {
+  background-color: rgba(124, 182, 255, 0.10);
+}
+.panel-day .post-link:hover .post-link-title,
+.panel-day .post-link:focus-visible .post-link-title {
+  color: #c4581e;
+}
+.panel-day .post-link:hover .post-link-date,
+.panel-day .post-link:focus-visible .post-link-date {
+  color: #0f1b2d;
+}
+
+.panel-night .post-link:hover,
+.panel-night .post-link:focus-visible {
+  background-color: rgba(167, 139, 250, 0.12);
+}
+.panel-night .post-link:hover .post-link-title,
+.panel-night .post-link:focus-visible .post-link-title {
+  color: #6ee7ff;
+}
+.panel-night .post-link:hover .post-link-date,
+.panel-night .post-link:focus-visible .post-link-date {
+  color: #e8ecff;
+}
+
+/* Social cards — bottom-up brand fill on hover. */
+.social-card {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+.social-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 0;
+  z-index: 0;
+  pointer-events: none;
+  transition: height 420ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.social-card:hover::before,
+.social-card:focus-visible::before { height: 100%; }
+.social-card > * {
+  position: relative;
+  z-index: 1;
+  transition: color 180ms ease-out 240ms;
+}
+
+.social-card--instagram::before {
+  background: linear-gradient(0deg, #feda75 0%, #fa7e1e 22%, #d62976 50%, #962fbf 75%, #4f5bd5 100%);
+}
+.social-card--github::before { background: #ffffff; }
+.social-card--discord::before { background: #5865F2; }
+
+.social-card--instagram:hover .social-card__title,
+.social-card--instagram:hover .social-card__handle,
+.social-card--instagram:hover .social-card__icon,
+.social-card--discord:hover .social-card__title,
+.social-card--discord:hover .social-card__handle,
+.social-card--discord:hover .social-card__icon { color: #ffffff; }
+
+.social-card--github:hover .social-card__title,
+.social-card--github:hover .social-card__handle,
+.social-card--github:hover .social-card__icon { color: #0a0d1a; }
+
 .modal-shell {
   position: fixed;
   inset: 0;
@@ -1314,6 +1407,7 @@ body.debug .debug-box {
 
 .weather {
   display: inline-flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.45rem;
   font-size: 0.8rem;
@@ -1322,6 +1416,84 @@ body.debug .debug-box {
 .weather-icon { font-size: 1.1rem; opacity: 0.95; }
 .weather-temp { font-weight: 700; }
 .weather-condition { font-size: 0.65rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.75; }
+.weather-location { flex-basis: 100%; font-size: 0.6rem; letter-spacing: 0.18em; text-transform: uppercase; opacity: 0.55; margin-top: 0.1rem; }
+
+/* Day widget and the night sticky-bar widget are right-anchored — pack all
+   rows against the right edge so the icon/temp/condition row and the
+   location row share the same right margin. The hero-corner night widget
+   is pinned top-left of #night-side, so it stays left-aligned. */
+.hero-weather-day,
+.sticky-bar-day  .bar-weather,
+.sticky-bar-night .bar-weather { justify-content: flex-end; }
+.hero-weather-day .weather-location,
+.sticky-bar-day  .bar-weather .weather-location,
+.sticky-bar-night .bar-weather .weather-location { text-align: right; }
+.hero-weather-night .weather-location { text-align: left; }
+
+/* Hero corner widgets — day pinned top-right of #day-side, night pinned
+   top-left of #night-side, so they meet at the top-center divider. */
+.hero-weather {
+  position: absolute;
+  top: 1.5rem;
+  z-index: 50;
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  pointer-events: none;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
+}
+.hero-weather-day  { right: 1.5rem; color: #2a1d10; text-shadow: 0 0 6px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(255, 255, 255, 0.85); }
+.hero-weather-night {  left: 1.5rem; color: #e8ecff; }
+
+/* Invert day-side text when the sky darkens (overcast / storm / heavy rain
+   / snow / showers / dense drizzle / rime fog) — dark text on a dark sky
+   stops reading, so swap to light text with a dark halo. Applies to both
+   the hero-corner and sticky-bar day widgets. */
+body[data-weather="overcast"] .hero-weather-day,
+body[data-weather="overcast"] .sticky-bar-day .bar-weather,
+body[data-weather="storm"]    .hero-weather-day,
+body[data-weather="storm"]    .sticky-bar-day .bar-weather,
+body[data-weather="rime"]     .hero-weather-day,
+body[data-weather="rime"]     .sticky-bar-day .bar-weather,
+body[data-weather="drizzle-3"] .hero-weather-day,
+body[data-weather="drizzle-3"] .sticky-bar-day .bar-weather,
+body[data-weather="rain-2"]    .hero-weather-day,
+body[data-weather="rain-2"]    .sticky-bar-day .bar-weather,
+body[data-weather="rain-3"]    .hero-weather-day,
+body[data-weather="rain-3"]    .sticky-bar-day .bar-weather,
+body[data-weather="showers-2"] .hero-weather-day,
+body[data-weather="showers-2"] .sticky-bar-day .bar-weather,
+body[data-weather="showers-3"] .hero-weather-day,
+body[data-weather="showers-3"] .sticky-bar-day .bar-weather,
+body[data-weather="snow-2"]    .hero-weather-day,
+body[data-weather="snow-2"]    .sticky-bar-day .bar-weather,
+body[data-weather="snow-3"]    .hero-weather-day,
+body[data-weather="snow-3"]    .sticky-bar-day .bar-weather {
+  color: #f4f7fb;
+  text-shadow: 0 0 6px rgba(0, 0, 0, 0.9), 0 1px 2px rgba(0, 0, 0, 0.8);
+}
+
+/* Sticky-bar widget — sits just to the LEFT of .bar-nav on both bars.
+   Markup order is celestial → logo → title → nav → bar-weather, so we use
+   flex `order` to slot weather between the title and the nav, and move the
+   auto-margin from .bar-nav onto .bar-weather so the weather widget is the
+   one that pushes itself + nav against the right edge. */
+.bar-weather {
+  flex: 0 0 auto;
+  position: relative;
+  z-index: 2;
+  order: 1;
+  margin-left: auto;
+}
+.sticky-bar .bar-nav { order: 2; margin-left: 0; }
+.sticky-bar-day  .bar-weather { color: #0f1b2d; }
+.sticky-bar-night .bar-weather { color: #e8ecff; }
+
+@media (max-width: 720px) {
+  .hero-weather { top: 1rem; }
+  .hero-weather-day  { right: 1rem; }
+  .hero-weather-night {  left: 1rem; }
+  .hero-weather .weather-condition { display: none; }
+  .bar-weather .weather-condition { display: none; }
+}
 
 .debug-box input[type="range"] {
   -webkit-appearance: none;
@@ -1564,3 +1736,122 @@ body[data-weather="storm"] .fx-lightning {
 }
 .debug-select:focus-visible { border-color: #ffffff; }
 .debug-select option { background: #11162b; color: #ffffff; }
+
+/* ─────────────────────────  Hardware lightbox  ─────────────────────────
+   Click any hardware card to open. The image scales to fit the viewport;
+   the caption sits at the bottom over a dark scrim that fades in from the
+   image, so the description stays readable on light or busy product photos. */
+.hardware-lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+}
+.hardware-lightbox[hidden] { display: none; }
+.hardware-lightbox-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 8, 22, 0.88);
+  backdrop-filter: blur(4px);
+}
+.hardware-lightbox-frame {
+  position: relative;
+  margin: 0;
+  max-width: min(1100px, 92vw);
+  max-height: 92vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: hardware-lightbox-pop 220ms ease-out;
+}
+.hardware-lightbox-img {
+  display: block;
+  max-width: 92vw;
+  max-height: 92vh;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  background: #11162b;
+}
+.hardware-lightbox-caption {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 2.25rem 1.75rem 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  color: #ffffff;
+  /* Scrim sits BELOW the text — opaque under the type, fading toward the
+     image above so the photo is uninterrupted at the top. */
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.92) 0%,
+    rgba(0, 0, 0, 0.78) 55%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  pointer-events: none;
+}
+.hardware-lightbox-kind,
+.hardware-lightbox-name,
+.hardware-lightbox-note {
+  /* Keep the caption legible where the scrim thins out near the top of the
+     gradient (e.g. light product photos like the white-background mic). Hard
+     offset, no blur — reads as a solid drop shadow rather than a glow. */
+  text-shadow: 0 2px 0 #000;
+}
+.hardware-lightbox-kind {
+  font-family: 'Space Mono', ui-monospace, monospace;
+  font-size: 0.7rem;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: #a78bfa;
+}
+.hardware-lightbox-name {
+  font-family: 'Space Grotesk', system-ui, sans-serif;
+  font-size: 1.4rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+}
+.hardware-lightbox-note {
+  font-size: 0.95rem;
+  color: rgba(232, 236, 255, 0.82);
+}
+.hardware-lightbox-close {
+  position: absolute;
+  top: 1.25rem;
+  right: 1.25rem;
+  z-index: 1;
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 1.6rem;
+  line-height: 1;
+  padding: 0 0 2px;
+  transition: background 160ms ease-out, transform 160ms ease-out;
+}
+.hardware-lightbox-close:hover { background: rgba(255, 255, 255, 0.22); transform: scale(1.05); }
+.hardware-lightbox-close:focus-visible { outline: 2px solid #ffffff; outline-offset: 2px; }
+@keyframes hardware-lightbox-pop {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@media (max-width: 640px) {
+  .hardware-lightbox { padding: 0.75rem; }
+  .hardware-lightbox-caption { padding: 1.75rem 1rem 1rem; }
+  .hardware-lightbox-name { font-size: 1.15rem; }
+  .hardware-lightbox-note { font-size: 0.85rem; }
+}

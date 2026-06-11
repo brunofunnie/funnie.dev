@@ -33,6 +33,8 @@ add_action('wp_enqueue_scripts', function () {
     wp_localize_script('funnie-main', 'FUNNIE', [
         'homeUrl'  => home_url('/'),
         'themeUrl' => FUNNIE_THEME_URL,
+        'dayIcon'   => FUNNIE_THEME_URL . '/assets/funnie_day_ico.png',
+        'nightIcon' => FUNNIE_THEME_URL . '/assets/funnie_night_ico.png',
     ]);
 }, 20);
 

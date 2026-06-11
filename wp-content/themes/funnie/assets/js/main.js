@@ -105,35 +105,65 @@
     const d = new Date();
     return d.getHours() + d.getMinutes() / 60;
   }
+  // Swap the favicon to the day or night icon. URLs are passed in via the
+  // `FUNNIE` localized object so the theme directory isn't hardcoded here.
+  // Falls through silently if the link or URLs are missing (e.g. theme
+  // mis-enqueued in a child theme override).
+  function updateFavicon(mode) {
+    const link = document.getElementById('favicon');
+    const cfg = window.FUNNIE || {};
+    const href = mode === 'night' ? cfg.nightIcon : cfg.dayIcon;
+    if (link && href) link.href = href;
+  }
+
   function applyTime(t) {
     hero.dataset.time = t;
     document.body.dataset.time = t;
+    updateFavicon(t);
   }
   let timeOverride = false;
 
   // Position sun/moon along an arc based on hour. Day arc 06–18, night arc 18–06.
   // On mobile (<=767px) the arc is skipped — CSS centers the active celestial
   // and we just clear any stale inline style so the CSS rules win cleanly.
+  // The "big" celestial is picked from `hero.dataset.time` (which side is
+  // expanded), NOT from `hour` — so the user can flip sides via hash or click
+  // and we still position the right wrap. When hero mode disagrees with the
+  // natural mode for `hour` (user is viewing the opposite side of the clock),
+  // the big celestial sits in a neutral centered/near-top default instead of
+  // an arbitrary arc point.
   const isMobileView = () => window.matchMedia('(max-width: 767px)').matches;
   function placeCelestials(hour) {
-    const isDay = hour >= 6 && hour < 18;
-    // Always reset inline so collapsed-mode CSS rules apply for the non-dominant
-    // celestial (and so mobile gets a clean slate for the CSS centering rule).
-    document.querySelector('.sun-wrap').removeAttribute('style');
-    document.querySelector('.moon-wrap').removeAttribute('style');
+    const sunWrap = document.querySelector('.sun-wrap');
+    const moonWrap = document.querySelector('.moon-wrap');
+    if (!sunWrap || !moonWrap) return;
+    // Always reset inline so collapsed-mode CSS rules apply for the small
+    // sidebar celestial (and so mobile gets a clean slate for the CSS
+    // centering rule).
+    sunWrap.removeAttribute('style');
+    moonWrap.removeAttribute('style');
     if (isMobileView()) return;
 
-    const wrap = isDay ? document.querySelector('#day-side .sun-wrap')
-                       : document.querySelector('#night-side .moon-wrap');
-    if (!wrap) return;
-    const f = isDay
-      ? (hour - 6) / 12
-      : ((hour - 18 + 24) % 24) / 12;
-    const xPct = 8 + f * 80;             // 8% (rise) to 88% (set)
-    const yPct = 70 - Math.sin(Math.PI * f) * 62; // 70% horizon, 8% peak
-    wrap.style.left = `calc(${xPct}% - 110px)`;
-    wrap.style.top = `${yPct}%`;
-    wrap.style.right = 'auto';
+    const isDayHour = hour >= 6 && hour < 18;
+    const big = hero.dataset.time === 'day' ? sunWrap : moonWrap;
+    const matchesNatural = (hero.dataset.time === 'day') === isDayHour;
+
+    if (matchesNatural) {
+      const f = isDayHour
+        ? (hour - 6) / 12
+        : ((hour - 18 + 24) % 24) / 12;
+      const xPct = 8 + f * 80;             // 8% (rise) to 88% (set)
+      const yPct = 70 - Math.sin(Math.PI * f) * 62; // 70% horizon, 8% peak
+      big.style.left = `calc(${xPct}% - 110px)`;
+      big.style.top = `${yPct}%`;
+      big.style.right = 'auto';
+    } else {
+      // Default position: horizontally centered, near the top of the panel.
+      big.style.left = '50%';
+      big.style.top = '8%';
+      big.style.right = 'auto';
+      big.style.transform = 'translateX(-50%)';
+    }
   }
 
   // Render moon phase from a date. 0=new, 0.5=full.
@@ -170,6 +200,10 @@
   // Placed after the palette consts and helper functions are initialized so
   // applySkyAndHills/fetchWeather don't hit the temporal dead zone.
   if (!hero) {
+    // body[data-time] is set by single.php's inline script before main.js
+    // runs, so we just sync the favicon to whatever side the post locked us
+    // to. Front-page handles this through applyTime() instead.
+    updateFavicon(document.body.dataset.time || 'day');
     const initHourNH = realHour();
     applySkyAndHills(initHourNH);
     const initPhaseNH = moonPhase();
@@ -253,6 +287,27 @@
   if (slider) {
     slider.addEventListener('input', () => setHour(parseFloat(slider.value), true));
   }
+
+  // Side from URL hash: only opens the requested side. The browser
+  // handles the scroll natively. Sky / sun / moon / timeOverride are
+  // strictly off-limits here — the existing sun/moon click handlers
+  // already own "manual side switch" semantics.
+  const SIDE_BY_HASH = {
+    '#blog-day': 'day',  '#about':    'day',  '#resume':  'day',
+    '#blog-night': 'night', '#hardware': 'night', '#socials': 'night',
+  };
+  function syncSideFromHash() {
+    const side = SIDE_BY_HASH[(location.hash || '').toLowerCase()];
+    if (!side) return;
+    applyTime(side);
+    // Re-place celestials so the sidebar small one and the big one match the
+    // new mode. Without this, stale inline arc styles leave the sidebar
+    // moon (or sun) at a random arc position when the hash flips us across
+    // sides without going through setHour.
+    placeCelestials(slider ? parseFloat(slider.value) : realHour());
+  }
+  syncSideFromHash();
+  window.addEventListener('hashchange', syncSideFromHash);
 
   // Re-sync to clock every minute (only if the user hasn't taken control).
   setInterval(() => {
@@ -467,6 +522,49 @@
     }
   });
 
+  // ── Hardware lightbox: clicking a card pops the product image at full
+  // size with the kind/name/note overlaid on a dark scrim at the bottom.
+  // Card data-* attributes drive the lightbox content so this handler is
+  // generic — adding more cards needs no JS changes.
+  const hardwareLightbox = document.getElementById('hardware-lightbox');
+  if (hardwareLightbox) {
+    const lbImg  = hardwareLightbox.querySelector('.hardware-lightbox-img');
+    const lbKind = hardwareLightbox.querySelector('.hardware-lightbox-kind');
+    const lbName = hardwareLightbox.querySelector('.hardware-lightbox-name');
+    const lbNote = hardwareLightbox.querySelector('.hardware-lightbox-note');
+    let lbLastTrigger = null;
+
+    function openHardwareLightbox(card) {
+      lbImg.src = card.dataset.image || '';
+      lbImg.alt = card.dataset.name || '';
+      lbKind.textContent = card.dataset.kind || '';
+      lbName.textContent = card.dataset.name || '';
+      lbNote.textContent = card.dataset.note || '';
+      hardwareLightbox.hidden = false;
+      document.body.style.overflow = 'hidden';
+      lbLastTrigger = card;
+      const closeBtn = hardwareLightbox.querySelector('.hardware-lightbox-close');
+      if (closeBtn) closeBtn.focus();
+    }
+    function closeHardwareLightbox() {
+      hardwareLightbox.hidden = true;
+      document.body.style.overflow = '';
+      // Drop the src so a re-open animates the new image in cleanly.
+      lbImg.removeAttribute('src');
+      if (lbLastTrigger) { lbLastTrigger.focus(); lbLastTrigger = null; }
+    }
+
+    document.addEventListener('click', (e) => {
+      const card = e.target.closest('[data-hardware-open]');
+      if (card) { openHardwareLightbox(card); return; }
+      if (e.target.closest('[data-hardware-close]')) closeHardwareLightbox();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && !hardwareLightbox.hidden) closeHardwareLightbox();
+    });
+  }
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !discordModal.hidden) {
       discordModal.hidden = true;
@@ -537,12 +635,12 @@
     const info = classifyWeather(code);
     document.body.dataset.weather = info.bucket;
 
-    // Update widget (icon + condition label). Temp is set separately by fetchWeather.
-    const widget = document.querySelector('.weather[data-weather]');
-    if (widget) {
+    // Update every widget on the page (debug-box, hero corners, sticky bars).
+    // Temp is set separately by fetchWeather.
+    document.querySelectorAll('.weather[data-weather]').forEach((widget) => {
       widget.querySelector('.weather-icon').textContent = info.icon;
       widget.querySelector('.weather-condition').textContent = info.label;
-    }
+    });
 
     // Particles spawn into EVERY .fx-rain / .fx-snow host on the page —
     // there's one in the hero scenery and one in each sticky bar so rain
@@ -580,8 +678,10 @@
 
   function renderWeather(temp, code) {
     applyWeather(code);
-    const widget = document.querySelector('.weather[data-weather]');
-    if (widget) widget.querySelector('.weather-temp').textContent = Math.round(temp) + '°';
+    const t = Math.round(temp) + '°';
+    document.querySelectorAll('.weather[data-weather]').forEach((widget) => {
+      widget.querySelector('.weather-temp').textContent = t;
+    });
   }
   function fetchWeather(lat, lon) {
     const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true`;
@@ -593,8 +693,10 @@
       // Don't clobber a manual override; just remember the live code.
       if (!override || override.value === '') renderWeather(cw.temperature, cw.weathercode);
       else {
-        const w = document.querySelector('.weather[data-weather]');
-        if (w) w.querySelector('.weather-temp').textContent = Math.round(cw.temperature) + '°';
+        const t = Math.round(cw.temperature) + '°';
+        document.querySelectorAll('.weather[data-weather]').forEach((w) => {
+          w.querySelector('.weather-temp').textContent = t;
+        });
       }
     }).catch((err) => console.warn('weather fetch failed', err));
   }

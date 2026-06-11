@@ -118,13 +118,19 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
 
         <div class="sun-wrap" role="button" tabindex="0" aria-label="Switch to day mode"><div id="sun"></div></div>
 
+        <div class="hero-weather hero-weather-day full-only weather" data-weather aria-live="polite">
+            <span class="weather-icon" aria-hidden="true">·</span>
+            <span class="weather-temp">--°</span>
+            <span class="weather-condition">…</span>
+            <span class="weather-location">Sorocaba, BR</span>
+        </div>
+
         <header class="full-only side-header" data-open="false">
             <button type="button" class="nav-toggle nav-toggle-day" aria-expanded="false" aria-controls="day-nav-menu" aria-label="Toggle menu">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
             <nav id="day-nav-menu" aria-label="Day sections" class="flex flex-wrap gap-6">
                 <button type="button" data-open-panel="about" class="nav-link day-nav">About</button>
-                <button type="button" data-open-panel="resume" class="nav-link day-nav">Resume</button>
                 <button type="button" data-open-panel="blog-day" class="nav-link day-nav">Blog</button>
             </nav>
         </header>
@@ -132,9 +138,6 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
         <nav class="collapsed-only sidebar-nav" aria-label="Day sections (compact)">
             <button type="button" data-open-panel="about" class="icon-btn icon-day" data-tooltip="About" aria-label="About">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-8 8-8s8 3.6 8 8"/></svg>
-            </button>
-            <button type="button" data-open-panel="resume" class="icon-btn icon-day" data-tooltip="Resume" aria-label="Resume">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="12" x2="16" y2="12"/><line x1="8" y1="16" x2="14" y2="16"/></svg>
             </button>
             <button type="button" data-open-panel="blog-day" class="icon-btn icon-day" data-tooltip="Blog" aria-label="Blog">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
@@ -304,6 +307,13 @@ $night_tagline   = funnie_settings('hero_night_tagline', '// personal');
         </div>
 
         <div class="shooting-stars" aria-hidden="true"></div>
+
+        <div class="hero-weather hero-weather-night full-only weather" data-weather aria-live="polite">
+            <span class="weather-icon" aria-hidden="true">·</span>
+            <span class="weather-temp">--°</span>
+            <span class="weather-condition">…</span>
+            <span class="weather-location">Sorocaba, BR</span>
+        </div>
 
         <header class="full-only side-header" data-open="false" style="justify-content: flex-end;">
             <nav id="night-nav-menu" aria-label="Night sections" class="flex flex-wrap gap-6">
